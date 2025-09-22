@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Empresas de Transporte - Terminal Llallagua</title>
+  <link rel="stylesheet" href="style.css">
+  <style>
+    #map {
+      height: 500px;
+      width: 100%;
+    }
+  </style>
+</head>
+<body>
+ <header>
+  <section class="section">
+    <div class="quick-strips">
+      <a class="q-item" href="rutas y horariosA.html"><span class="q-ico">🛣️</span><strong>Atras</strong><small>Regresar a las rutas y horarios</small></a>
+      <a class="q-item" href="index.html"><span class="q-ico">🏠</span><strong>Inicio</strong><small>Regresar al inicio</small></a>
+      <a class="q-item" href="historia.html"><span class="q-ico">📜</span><strong>Historia</strong><small>Pergamino interactivo</small></a>
+      <a class="q-item" href="galeria.html"><span class="q-ico">🖼️</span><strong>Galería</strong><small>Fotos del lugar</small></a>
+      <a class="q-item" href="ubicacion.html"><span class="q-ico">📍</span><strong>Ubicación</strong><small>Cómo llegar</small></a>
+      <a class="q-item" href="modelo3D.html"><span class="q-ico">🧩</span><strong>Modelo 3D</strong><small>Vista interactiva</small></a>
+    </div>
+  </section>
+ </header>
+ <main>
+   <h2>Ruta Llallagua - Cochabamba</h2>
+   <div id="map"></div>
+ </main>
+
+ <footer>
+    <p>&copy; 2025 Terminal de Buses de Llallagua. Todos los derechos reservados.</p>
+ </footer>
+
+ <script>
+   function initMap() {
+     const llallagua = { lat: -18.4194, lng: -66.5807 };
+     const Cochabamba = { lat: -17.3895, lng: -66.1568 };
+
+     const map = new google.maps.Map(document.getElementById("map"), {
+       zoom: 6,
+       center: llallagua,
+     });
+
+     const directionsService = new google.maps.DirectionsService();
+     const directionsRenderer = new google.maps.DirectionsRenderer();
+     directionsRenderer.setMap(map);
+
+     directionsService.route(
+       {
+         origin: llallagua,
+         destination: Cochabamba,
+         travelMode: "DRIVING",
+       },
+       (response, status) => {
+         if (status === "OK") {
+           directionsRenderer.setDirections(response);
+         } else {
+           alert("No se pudo mostrar la ruta: " + status);
+         }
+       }
+     );
+   }
+ </script>
+
+ <script async
+   src="https://maps.googleapis.com/maps/api/js?key=AIzaSyCyAOcY7zGIjPHuFi1AJ6_bPV7d4CfuHK8&callback=initMap">
+ </script>
+</body>
+</html>

@@ -1,0 +1,298 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Historia</title>
+    <link rel="stylesheet" href="style.css">
+      <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/108/three.min.js"></script>
+</head>
+<body>
+  <header>
+  <section class="section">
+    <div class="quick-strips">
+      <a class="q-item" href="index.html"><span class="q-ico">🏠</span><strong>Inicio</strong><small>Regresar al inicio</small></a>
+      <a class="q-item" href="empresas.html"><span class="q-ico">🚌</span><strong>Empresas</strong><small>Rutas y contactos</small></a>
+      <a class="q-item" href="galeria.html"><span class="q-ico">🖼️</span><strong>Galería</strong><small>Fotos del lugar</small></a>
+      <a class="q-item" href="ubicacion.html"><span class="q-ico">📍</span><strong>Ubicación</strong><small>Cómo llegar</small></a>
+      <a class="q-item" href="modelo3D.html"><span class="q-ico">🧩</span><strong>Modelo 3D</strong><small>Vista interactiva</small></a>
+    </div>
+  </section>
+  </header>
+
+  <main class="stage">
+    <div class="scroll3d-wrap museum-bg" id="scrollWrap" tabindex="0" >
+      <div id="scroll3d"></div>
+
+
+      <!-- Texto encima del pergamino (se abre con la animación) -->
+      <div class="paperOverlay" id="paperOverlay" style="--p:0">
+        <div class="paperInner" aria-live="polite">
+          <h2>Historia</h2>
+            <p>
+                La Terminal de Buses de Llallagua fue inaugurada en agosto de 1998 como respuesta a la necesidad de centralizar las salidas y 
+                llegadas de transporte que antes se realizaban en distintos puntos de la ciudad.
+            </p>
+            <p>
+                Su ubicación se encuentra en la calle 30 de Octubre, zona 2, cerca del Estadio Irineo Pimentel Rojas. 
+                Desde su apertura, la terminal ha sido administrada por la Alcaldía y cuenta con boleterías, 
+                andenes y carriles de salida para organizar el tráfico de pasajeros y empresas de transporte.
+            </p>
+            <p>
+                Durante los años 2000 y 2010, los planes municipales ya señalaban la importancia de la terminal como 
+                nodo de conexión regional, aunque también se reconocían limitaciones en su infraestructura 
+                debido al crecimiento constante de la demanda de transporte interdepartamental y provincial.
+            </p>
+            <p>
+                Hoy en día, la Terminal de Buses de Llallagua sigue en funcionamiento y es un punto estratégico de 
+                conexión entre el Norte de Potosí y ciudades como Oruro, Cochabamba y Potosí, consolidándose como 
+                la puerta de entrada y salida de la región.
+            </p>
+        </div>
+      </div>
+    </div>
+
+  </main>
+  <!-- Sonidos -->
+  <audio id="sndOpen"  src="papel.mp3" preload="auto"></audio>
+  <audio id="sndClose" src="papel.mp3"   preload="auto"></audio>
+
+  <script>
+
+  (function(){
+    var wrap      = document.getElementById('scrollWrap');
+    var container = document.getElementById('scroll3d');
+    var overlay   = document.getElementById('paperOverlay');
+    var inner     = overlay.querySelector('.paperInner');
+    var sndOpen   = document.getElementById('sndOpen');
+    var sndClose  = document.getElementById('sndClose');
+    var btnModel = document.getElementById('btnModel');
+function showModelOnly(on){
+  wrap.classList.toggle('model-only', !!on);
+  target = 1; 
+}
+
+if (btnModel){
+  btnModel.addEventListener('click', function(e){
+    e.stopPropagation(); 
+    showModelOnly(!wrap.classList.contains('model-only'));
+  });
+}
+
+// Tecla M para alternar
+window.addEventListener('keydown', function(e){
+  if (e.key.toLowerCase() === 'm'){
+    showModelOnly(!wrap.classList.contains('model-only'));
+  }
+});
+
+
+  var scene = new THREE.Scene();
+ var renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+renderer.setSize(container.clientWidth, container.clientHeight);
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+container.appendChild(renderer.domElement);
+    var camera = new THREE.PerspectiveCamera(35, container.clientWidth/container.clientHeight, 0.1, 100);
+    camera.position.set(0, 0.6, 15);
+   scene.background = null;
+   
+    // Luces
+    var amb = new THREE.AmbientLight(0xffffff, 0.55); scene.add(amb);
+    var dir = new THREE.DirectionalLight(0xffffff, 0.9);
+    dir.position.set(4, 6, 5); dir.castShadow = true; scene.add(dir);
+
+    // Suelo
+    var groundMat = new THREE.ShadowMaterial({ opacity: 0.35 });
+var ground = new THREE.Mesh(
+  new THREE.PlaneBufferGeometry(120, 120), 
+  groundMat
+);
+ground.rotation.x = -Math.PI/2;
+ground.position.y = -3.2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+    // Grupo principal (para rotación automática)
+var scrollGroup = new THREE.Group(); 
+scrollGroup.position.y = 1;  
+scrollGroup.position.x = -0.2;  
+scrollGroup.position.z = -3;  
+scene.add(scrollGroup);
+
+    // Materiales
+    var paperMat = new THREE.MeshPhysicalMaterial({ color:0xe7d2a6, roughness:0.8, metalness:0.0, clearcoat:0.04, side: THREE.DoubleSide });
+    var rollMat  = new THREE.MeshStandardMaterial({ color:0xd6bd8b, metalness:0.25, roughness:0.5 });
+
+    // Medidas (vertical)
+    var W = 3.6;      // ancho papel
+    var H = 6.2;      // alto total abierto
+    var R = 0.35;     // radio de rollos
+    var EDGE = R*2.2;
+
+    // Papel (plano)
+    var paperGeo = new THREE.PlaneBufferGeometry(W, H - 2*EDGE, 64, 1);
+    var paper    = new THREE.Mesh(paperGeo, paperMat);
+    paper.castShadow = true;
+    scrollGroup.add(paper);
+
+    // Rollos (cilindros horizontales)
+    var rollGeo = new THREE.CylinderBufferGeometry(R, R, W, 32, 1, true);
+    var topRoll    = new THREE.Mesh(rollGeo, rollMat);
+    var bottomRoll = new THREE.Mesh(rollGeo, rollMat);
+    [topRoll, bottomRoll].forEach(function(m){
+      m.rotation.z = Math.PI/2;
+      m.castShadow = true; m.receiveShadow = true;
+    });
+    scrollGroup.add(topRoll, bottomRoll);
+
+    // POMOS/ESFERAS en los extremos (4 en total)
+    var knobR = R * 1.5;
+    var capGeo = new THREE.SphereBufferGeometry(knobR, 24, 18);
+    var topKnobs = [ new THREE.Mesh(capGeo, rollMat), new THREE.Mesh(capGeo, rollMat) ];
+    var botKnobs = [ new THREE.Mesh(capGeo, rollMat), new THREE.Mesh(capGeo, rollMat) ];
+    // Colocar en X ± (W/2 + leve extra) — Y se actualiza en layout()
+    var capX = W/2 + knobR*0.8;
+    topKnobs[0].position.x = -capX; topKnobs[1].position.x = +capX;
+    botKnobs[0].position.x = -capX; botKnobs[1].position.x = +capX;
+    topKnobs.concat(botKnobs).forEach(function(k){ k.castShadow = true; k.receiveShadow = true; scrollGroup.add(k); });
+
+    // Estado
+    var progress = 0, target = 0, lastT = 0;
+
+    function layoutByProgress(t){
+      var p = t*t*(3-2*t); // smoothstep
+
+      // Alto visible del papel
+      var minH = 0.18;
+      var paperH = THREE.Math.lerp(minH, (H - 2*EDGE), p);
+      paper.scale.y = paperH / (H - 2*EDGE);
+
+      // Posición de rollos
+      var half = (H/2 - R);
+      var offset = THREE.Math.lerp(0, half, p);
+      topRoll.position.y    = +offset;
+      bottomRoll.position.y = -offset;
+
+      // Poner pomos a la misma altura de cada rollo
+      topKnobs.forEach(function(k){ k.position.y = topRoll.position.y; });
+      botKnobs.forEach(function(k){ k.position.y = bottomRoll.position.y; });
+
+      // Sutil inclinación del papel
+      paper.rotation.x = THREE.Math.degToRad(THREE.Math.lerp(3, 0, p))*0.2;
+
+      // Overlay sincronizado (escala vertical) + permitir scroll de texto cuando está abierto
+      overlay.style.setProperty('--p', p.toFixed(4));
+      overlay.style.pointerEvents = (p > 0.98) ? 'auto' : 'none';
+
+      // Luz direccional un poco más fuerte al abrir
+      dir.intensity = 0.8 + 0.3*p;
+    }
+
+    function toggle(){
+      target = target > 0.5 ? 0 : 1;
+      try{ (target===1 ? sndOpen : sndClose).play(); }catch(e){}
+    }
+
+    // Click en el wrap, pero ignora clicks sobre el texto cuando está abierto
+    wrap.addEventListener('click', function(e){
+      if (overlay.style.pointerEvents === 'auto' && e.target.closest('.paperInner')) return;
+      toggle();
+    });
+    wrap.addEventListener('keydown', function(e){
+      if(e.key==='Enter' || e.key===' '){ e.preventDefault(); toggle(); }
+    });
+
+    // “Linterna” que sigue al puntero (siempre fuera, del lado de la cámara)
+    var raycaster = new THREE.Raycaster();
+    var mouse     = new THREE.Vector2();
+    var pointerLight = new THREE.PointLight(0xfff2c2, 0, 3, 2);
+    pointerLight.position.set(0,0,1.2);
+    pointerLight.castShadow = false;
+    scene.add(pointerLight);
+
+    var disk = new THREE.Mesh(
+      new THREE.CircleBufferGeometry(0.18, 32),
+      new THREE.MeshBasicMaterial({ color:0xfff2c2, transparent:true, opacity:0.25 })
+    );
+    disk.visible = false; scene.add(disk);
+
+    function onMouseMove(e){
+      var rect = container.getBoundingClientRect();
+      var x = ((e.clientX - rect.left)/rect.width)*2 - 1;
+      var y = -((e.clientY - rect.top)/rect.height)*2 + 1;
+      mouse.set(x, y);
+
+      // Raycast contra TODO el pergamino (papel + rollos)
+      raycaster.setFromCamera(mouse, camera);
+      var hits = raycaster.intersectObjects([paper, topRoll, bottomRoll], true);
+
+      if(hits.length){
+        var hit = hits[0];
+        var p   = hit.point.clone();
+        var n   = hit.face.normal.clone().transformDirection(hit.object.matrixWorld);
+        var camDir = new THREE.Vector3();
+        camera.getWorldDirection(camDir); 
+        var sign = (n.dot(camDir) > 0) ? -1 : 1;
+        var pos  = p.clone().addScaledVector(n, 0.4 * sign);
+
+        pointerLight.position.copy(pos);
+        pointerLight.intensity = 1.6;
+
+        disk.visible = true;
+        disk.position.copy(p);
+        var lookAt = p.clone().add(n);
+        disk.lookAt(lookAt);
+      } else {
+        pointerLight.intensity = 0.0;
+        disk.visible = false;
+      }
+    }
+    container.addEventListener('mousemove', onMouseMove);
+    container.addEventListener('mouseleave', function(){
+      pointerLight.intensity = 0.0; disk.visible = false;
+    });
+
+    // Resize
+    function onResize(){
+      var w = container.clientWidth, h = container.clientHeight;
+      renderer.setSize(w, h);
+      camera.aspect = w/h;
+      camera.updateProjectionMatrix();
+    }
+    window.addEventListener('resize', onResize);
+
+    // Animación
+    function animate(now){
+      requestAnimationFrame(animate);
+      now = now || 0;
+      var dt = Math.min(0.05, (now - lastT)/1000); lastT = now;
+
+      var speed = 2.6;
+      if (Math.abs(progress - target) > 0.0001){
+        var dirS = Math.sign(target - progress);
+        progress = THREE.Math.clamp(progress + dirS*speed*dt, 0, 1);
+        layoutByProgress(progress);
+      }
+
+      // rotación automática (alrededor de Y) + balanceo sutil
+      scrollGroup.rotation.y += 0.0032;
+      scrollGroup.rotation.z = 0.04*Math.sin(now*0.0015);
+
+      renderer.render(scene, camera);
+  
+    }
+    
+
+    layoutByProgress(0);
+    onResize();
+    animate();
+
+    inner.addEventListener('click', function(e){ e.stopPropagation(); });
+  })();
+  </script>
+  <footer>
+        <p>&copy; 2025 Terminal de Buses de Llallagua. Todos los derechos reservados.</p>
+    </footer>
+</body>
+</html>

@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <title>Galería - Terminal Llallagua</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+  <header>
+  <section class="section">
+    <div class="quick-strips">
+      <a class="q-item" href="index.html"><span class="q-ico">🏠</span><strong>Inicio</strong><small>Regresar al inicio</small></a>
+      <a class="q-item" href="historia.html"><span class="q-ico">📜</span><strong>Historia</strong><small>Pergamino interactivo</small></a>
+      <a class="q-item" href="empresas.html"><span class="q-ico">🚌</span><strong>Empresas</strong><small>Rutas y contactos</small></a>
+      <a class="q-item" href="ubicacion.html"><span class="q-ico">📍</span><strong>Ubicación</strong><small>Cómo llegar</small></a>
+      <a class="q-item" href="modelo3D.html"><span class="q-ico">🧩</span><strong>Modelo 3D</strong><small>Vista interactiva</small></a>
+    </div>
+  </section>
+  </header>
+
+  <main>
+<section class="galeria">
+  <h1>Galería de Fotos</h1>
+  <div class="zona-links">
+    
+    <div class="zona">
+      <h2>Explora el Exterior</h2>
+      <p>Haz clic en el árbol para ver las imágenes del exterior.</p>
+      <a href="exterior.html">
+        <img src="proyecto/arbol.gif" alt="arbol" class="zona-img">
+      </a>
+    </div>
+
+    <div class="zona">
+      <h2>Explora el Interior</h2>
+      <p>Haz clic en la puerta para ver las imágenes del interior de la terminal.</p>
+      <a class="zona-3d" href="interior.html" id="linkInterior">
+       <div id="doorMount" class="door-embed"></div>
+       <script>
+(() => {
+
+  const mount = document.getElementById('doorMount');
+  const link  = document.getElementById('linkInterior');
+
+ 
+  function getSize() {
+    return { w: mount.clientWidth, h: mount.clientHeight };
+  }
+
+
+  const scene = new THREE.Scene();
+  const { w, h } = getSize();
+  const camera = new THREE.PerspectiveCamera(60, w / h, 0.1, 1000);
+  camera.position.set(0, 1.6, 5);
+
+  const renderer = new THREE.WebGLRenderer({ antialias: true, alpha: true });
+  renderer.setSize(w, h);
+  mount.appendChild(renderer.domElement);
+
+  // Luces
+  scene.add(new THREE.AmbientLight(0xffffff, 0.6));
+  const dirLight = new THREE.DirectionalLight(0xffffff, 1);
+  dirLight.position.set(4, 6, 3);
+  scene.add(dirLight);
+
+  // Grupo puerta
+  const doorGroup = new THREE.Group();
+  doorGroup.position.y = 0.6;
+  scene.add(doorGroup);
+
+  // Geometría y materiales
+  const leafW = 0.9, leafH = 2, leafT = 0.1;
+  const gap = 0.02;
+  const wood = new THREE.MeshPhongMaterial({ color: 0x6d4c41 });
+  const leafGeo = new THREE.BoxGeometry(leafW, leafH, leafT);
+
+  // Bisagra izquierda
+  const hingeL = new THREE.Object3D();
+  hingeL.position.set(-(leafW + gap/2), 0, 0);
+  doorGroup.add(hingeL);
+
+  const leafL = new THREE.Mesh(leafGeo, wood);
+  leafL.position.set(leafW/2, 0, 0);
+  hingeL.add(leafL);
+
+ 
+  const hingeR = new THREE.Object3D();
+  hingeR.position.set(+(leafW + gap/2), 0, 0);
+  doorGroup.add(hingeR);
+
+  const leafR = new THREE.Mesh(leafGeo, wood);
+  leafR.position.set(-leafW/2, 0, 0);
+  hingeR.add(leafR);
+
+  // Pomos
+  const knobMat = new THREE.MeshPhongMaterial({ color: 0xffd54f });
+  const knobGeo = new THREE.SphereGeometry(0.08, 16, 16);
+  const knobInset = 0.15;
+  const knobL = new THREE.Mesh(knobGeo, knobMat);
+  knobL.position.set( leafW/2 - knobInset, 0, leafT/2 + 0.05 );
+  leafL.add(knobL);
+  const knobR = new THREE.Mesh(knobGeo, knobMat);
+  knobR.position.set( -leafW/2 + knobInset, 0, leafT/2 + 0.05 );
+  leafR.add(knobR);
+
+  // Marco
+  const frameMat = new THREE.MeshPhongMaterial({ color: 0x333333 });
+  const frame = new THREE.Mesh(
+    new THREE.BoxGeometry((leafW*2 + gap + 0.1), leafH + 0.1, 0.06),
+    frameMat
+  );
+  frame.position.set(0, 0, -0.03);
+  doorGroup.add(frame);
+  
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2)); // nítido en pantallas HiDPI
+
+
+doorGroup.scale.set(1.15, 1.15, 1);
+doorGroup.position.y = 0.9; 
+
+function fitCameraToDoor(){
+  
+  const margin = 0.4; 
+  const visibleH = 2 + margin; 
+  const dist = (visibleH/2) / Math.tan(THREE.MathUtils.degToRad(camera.fov/2));
+  camera.position.set(0, 0.9, dist); 
+}
+fitCameraToDoor();
+
+
+window.addEventListener('resize', () => {
+  const { w, h } = getSize();
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+  renderer.setSize(w, h);
+  fitCameraToDoor();
+});
+
+
+  let open = false;
+  let redirected = false;
+
+
+  link.addEventListener('click', (e) => {
+    e.preventDefault();
+    if (!redirected) open = true;
+  });
+
+  function animate() {
+    requestAnimationFrame(animate);
+
+    const targetL = open ? -Math.PI/2 : 0;
+    const targetR = open ?  Math.PI/2 : 0;
+
+    hingeL.rotation.y += (targetL - hingeL.rotation.y) * 0.12;
+    hingeR.rotation.y += (targetR - hingeR.rotation.y) * 0.12;
+
+
+    if (open && !redirected) {
+      const tol = 0.02;
+      const readyL = Math.abs(hingeL.rotation.y - targetL) < tol;
+      const readyR = Math.abs(hingeR.rotation.y - targetR) < tol;
+      if (readyL && readyR) {
+        redirected = true;
+        window.location.href = link.href; 
+      }
+    }
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+
+  window.addEventListener('resize', () => {
+    const { w, h } = getSize();
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  });
+})();
+</script>
+      </a>
+    </div>
+      <div class="zona">
+      <h2>Explora el Segundo Piso</h2>
+      <p>Haz clic en las gradas para ver las imágenes del segundo piso.</p>
+      <a id="linkSegundoPiso" href="segundopiso.html">
+      <div id="stairsMount" class="stairs-embed"></div>
+      <script>
+(() => {
+  const link  = document.getElementById('linkSegundoPiso');
+  const mount = document.getElementById('stairsMount');
+  const NEXT_URL = link.href;
+
+
+  const size = () => ({ w: mount.clientWidth, h: mount.clientHeight });
+
+
+  const scene = new THREE.Scene();
+  const { w, h } = size();
+  const camera = new THREE.PerspectiveCamera(50, w/h, 0.1, 100);
+  camera.position.set(1.8, 1.5, 4);
+  camera.lookAt(1.5, 1.5, 1.8);
+
+  const renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+  renderer.setSize(w, h);
+  mount.appendChild(renderer.domElement);
+
+  // Luces
+  scene.add(new THREE.AmbientLight(0xffffff, 0.55));
+  const dir = new THREE.DirectionalLight(0xffffff, 1);
+  dir.position.set(5, 8, 6);
+  scene.add(dir);
+
+
+  const stairs = new THREE.Group();
+  scene.add(stairs);
+
+  const stepW = 2, stepH = 0.28, stepD = 0.9;
+  const numSteps = 9;
+  const mat = new THREE.MeshPhongMaterial({ color: 0xdddddd });
+
+  for (let i = 0; i < numSteps; i++) {
+    const geo = new THREE.BoxGeometry(stepW, stepH, stepD);
+    const step = new THREE.Mesh(geo, mat);
+    step.position.set(0, i*stepH, -i*stepD);
+    stairs.add(step);
+  }
+
+
+  const floor = new THREE.Mesh(
+    new THREE.PlaneGeometry(8, 8),
+    new THREE.MeshPhongMaterial({ color: 0x222222 })
+  );
+  floor.rotation.x = -Math.PI/2;
+  floor.position.y = -0.01;
+  scene.add(floor);
+
+  stairs.scale.set(1.1, 1.1, 1.1);
+  stairs.position.y = 0.2;
+
+  const raycaster = new THREE.Raycaster();
+  const mouse = new THREE.Vector2();
+
+  function pickFromEvent(e){
+    const rect = renderer.domElement.getBoundingClientRect();
+    mouse.x = ((e.clientX - rect.left) / rect.width) * 2 - 1;
+    mouse.y = -((e.clientY - rect.top) / rect.height) * 2 + 1;
+    raycaster.setFromCamera(mouse, camera);
+    return raycaster.intersectObjects(stairs.children, true);
+  }
+
+ function render(){ renderer.render(scene, camera); requestAnimationFrame(render); }
+  render();
+
+
+  function animate(){
+    requestAnimationFrame(animate);
+
+
+    stairs.rotation.y += 0;
+
+    if (goUp) {
+      t += 0.04;
+      camera.position.y += 0.05;
+      camera.position.z -= 0.08;
+      camera.lookAt(0, 1.2, -numSteps*stepD*0.7);
+      if (t >= 1) window.location.href = NEXT_URL;
+    }
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  window.addEventListener('resize', () => {
+    const { w, h } = size();
+    camera.aspect = w / h;
+    camera.updateProjectionMatrix();
+    renderer.setSize(w, h);
+  });
+})();
+</script>
+
+  </a>
+</div>
+</section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Terminal de Buses de Llallagua. Todos los derechos reservados.</p>
+  </footer>
+</body>
+</html>

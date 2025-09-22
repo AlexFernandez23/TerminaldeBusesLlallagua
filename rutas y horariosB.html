@@ -1,0 +1,207 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <title>Empresas de Transporte - Terminal Llallagua</title>
+  <link rel="stylesheet" href="style.css" />
+</head>
+<body>
+  <div class="page">
+  <header>
+    <section class="section">
+      <div class="quick-strips">
+        <a class="q-item" href="empresas.html"><span class="q-ico">🚌</span><strong>Regresar a Empresas</strong><small>Rutas y contactos</small></a>
+        <a class="q-item" href="index.html"><span class="q-ico">🏠</span><strong>Inicio</strong><small>Regresar al inicio</small></a>
+        <a class="q-item" href="historia.html"><span class="q-ico">📜</span><strong>Historia</strong><small>Pergamino interactivo</small></a>
+        <a class="q-item" href="galeria.html"><span class="q-ico">🖼️</span><strong>Galería</strong><small>Fotos del lugar</small></a>
+        <a class="q-item" href="ubicacion.html"><span class="q-ico">📍</span><strong>Ubicación</strong><small>Cómo llegar</small></a>
+        <a class="q-item" href="modelo3D.html"><span class="q-ico">🧩</span><strong>Modelo 3D</strong><small>Vista interactiva</small></a>
+      </div>
+    </section>
+  </header>
+
+  <main>
+
+    <section id="bustillo" class="bx container">
+      <header class="bx-head">
+        <h2>Empresa Bustillo — Horarios y Rutas</h2>
+
+      </header>
+
+      <div class="bx-grid">
+
+        <nav class="bx-nav" aria-label="Destinos">
+          <ul id="bx-destinos"></ul>
+        </nav>
+
+        <section class="bx-main" id="bx-panel"></section>
+      </div>
+    </section>
+  </main>
+
+  <footer>
+    <p>&copy; 2025 Terminal de Buses de Llallagua. Todos los derechos reservados.</p>
+  </footer>
+
+  <script>
+
+  const DATA = {
+    empresa: "Bustillo",
+    destinos: [
+      {
+        nombre:"Cochabamba",
+        nota:"Llallagua ↔ Cochabamba",
+        ida: [
+          { pasaPor:"Oruro", saleDesde:"Terminal Llallagua", horarios:["09:00","20:00"], rutaUrl:"rutacochabamba.html" }
+        ]
+      },
+      {
+        nombre:"Oruro",
+        nota:"Llallagua ↔ Oruro",
+        ida: [
+          { pasaPor:"Huanuni", saleDesde:"Terminal Llallagua", horarios:["06:30","12:00","18:30"], rutaUrl:"rutaOruro.html" }
+        ]
+      },
+      {
+        nombre:"La Paz",
+        nota:"Llallagua ↔ La Paz",
+        ida: [
+          { pasaPor:"Oruro", saleDesde:"Terminal Llallagua", horarios:["19:30","21:00"], rutaUrl:"rutaLapaz.html" }
+        ]
+      },
+      {
+        nombre:"Sucre",
+        nota:"Llallagua ↔ Sucre",
+        ida: [
+          { pasaPor:"Pocoata", saleDesde:"Terminal Llallagua", horarios:["07:30"], rutaUrl:"rutaSucre.html" }
+        ]
+      },
+      {
+        nombre:"Potosí",
+        nota:"Llallagua ↔ Potosí",
+        ida: [
+          { pasaPor:"Uncía", saleDesde:"Terminal Llallagua", horarios:["05:30","14:00"], rutaUrl:"rutaPotosi.html" }
+        ]
+      }
+    ]
+  };
+
+  (function(){
+    const $nav = document.getElementById("bx-destinos");
+    const $panel = document.getElementById("bx-panel");
+    let selected = 0;
+
+    function sanitize(str=""){
+      return String(str).replace(/[<>&"]/g, s => ({ "<":"&lt;", ">":"&gt;", "&":"&amp;" }[s]));
+    }
+
+function renderNav(){
+  $nav.innerHTML = "";
+  DATA.destinos.forEach((d,i)=>{
+    const li = document.createElement("li");
+    const btn = document.createElement("button");
+    btn.textContent = d.nombre;
+    btn.className = (i===selected) ? "active" : "";
+    btn.onclick = () => {
+      selected = i;
+      renderNav();     
+      renderPanel();   
+      updateHash();    
+    };
+    li.appendChild(btn);
+    $nav.appendChild(li);
+  });
+}
+
+    function buildIdaTable(rows){
+      const card = document.createElement("section");
+      card.className = "bx-card";
+
+      const body = document.createElement("div");
+      body.className = "body";
+
+
+      body.insertAdjacentHTML("beforeend",
+        `<div class="subhead"><span class="muted">${rows.length} registro(s)</span></div>`);
+
+      if(!rows.length){
+        body.insertAdjacentHTML("beforeend", `<div class="empty">No hay horarios para mostrar.</div>`);
+      }else{
+        const wrap = document.createElement("div"); wrap.className = "tbl-wrap";
+        const table = document.createElement("table");
+        table.innerHTML = `
+          <thead>
+            <tr>
+              <th>Pasa por</th>
+              <th>Sale desde</th>
+              <th>Horarios</th>
+              <th style="width:1%">Ruta</th>
+            </tr>
+          </thead>
+          <tbody></tbody>`;
+        const tbody = table.querySelector("tbody");
+
+        rows.forEach(r=>{
+          const tr = document.createElement("tr");
+
+          const tdP = document.createElement("td"); tdP.textContent = r.pasaPor || "—";
+          const tdS = document.createElement("td"); tdS.textContent = r.saleDesde || "—";
+
+          const tdH = document.createElement("td");
+          if(Array.isArray(r.horarios) && r.horarios.length){
+            r.horarios.forEach(h=>{
+              const chip = document.createElement("span");
+              chip.className="chip";
+              chip.textContent = h;
+              tdH.appendChild(chip);
+            });
+          }else{
+            tdH.innerHTML = `<span class="chip">—</span>`;
+          }
+
+          const tdR = document.createElement("td");
+          const btn = document.createElement("button");
+          btn.className = "btn-route";
+          btn.type = "button";
+          btn.textContent = "Ruta";
+          const url = (r.rutaUrl||"").trim() || "#";
+          btn.onclick = ()=>{ url==="#" ? alert("Agrega la URL de ruta en 'rutaUrl'.") : (window.location.href = url); };
+          tdR.appendChild(btn);
+
+          tr.append(tdP, tdS, tdH, tdR);
+          tbody.appendChild(tr);
+        });
+
+        wrap.appendChild(table);
+        body.appendChild(wrap);
+      }
+
+      card.appendChild(body);
+      return card;
+    }
+
+    function renderPanel(){
+      const d = DATA.destinos[selected];
+      $panel.innerHTML = "";                   
+      $panel.appendChild(buildIdaTable(d.ida||[]));  
+    }
+
+    function updateHash(){
+      const name = DATA.destinos[selected].nombre.replace(/\s+/g,'');
+      location.hash = `#${encodeURIComponent(name)}`;
+    }
+    function applyHash(){
+      const h = decodeURIComponent((location.hash||"").replace("#",""));
+      if(!h) return;
+      const idx = DATA.destinos.findIndex(d => d.nombre.replace(/\s+/g,'') === h);
+      if(idx >= 0) selected = idx;
+    }
+
+    applyHash();
+    renderNav();
+    renderPanel();
+  })();
+  </script>
+  </div>
+</body>
+</html>
