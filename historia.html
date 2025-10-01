@@ -150,7 +150,6 @@ scene.add(scrollGroup);
     var capGeo = new THREE.SphereBufferGeometry(knobR, 24, 18);
     var topKnobs = [ new THREE.Mesh(capGeo, rollMat), new THREE.Mesh(capGeo, rollMat) ];
     var botKnobs = [ new THREE.Mesh(capGeo, rollMat), new THREE.Mesh(capGeo, rollMat) ];
-    // Colocar en X ± (W/2 + leve extra) — Y se actualiza en layout()
     var capX = W/2 + knobR*0.8;
     topKnobs[0].position.x = -capX; topKnobs[1].position.x = +capX;
     botKnobs[0].position.x = -capX; botKnobs[1].position.x = +capX;
