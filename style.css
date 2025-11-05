@@ -35,14 +35,20 @@
   grid-template-columns: repeat(auto-fit, minmax(140px,1fr));
   gap: 14px; margin-top: -20px; /* se “pega” al hero */
 }
+/* Tarjetitas */
 .q-item{
   display: grid; gap: 4px; place-items: start;
-  background: rgba(255,255,255,.03);
-  padding: 14px 16px; border-radius: 12px; box-shadow: var(--shadow);
+  background: linear-gradient(90deg, var(--card-bg-a), var(--card-bg-b));
+  padding: 14px 16px; border-radius: 12px;
+  box-shadow: 0 10px 24px var(--card-glow);
   text-decoration: none; color: var(--text);
-  transition: transform .2s, background .2s;
+  border: 1px solid var(--card-border);
+  transition: transform .2s, box-shadow .2s, background .2s;
 }
-.q-item:hover{ transform: translateY(-2px); background: rgba(255,255,255,.05); }
+.q-item:hover{
+  transform: translateY(-2px);
+  box-shadow: 0 18px 40px var(--card-glow);
+}
 .q-ico{ font-size: 22px; }
 .q-item strong{ font-size: .98rem; }
 .q-item small{ color: var(--muted); }
@@ -57,22 +63,35 @@ body {
 
 /* encabezado */
 .hero {
+    position: relative;
     background-image: url("proyecto/3.jpg");
     background-size: cover;
     background-position: center;
     height: 60vh;
-    position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
+    z-index: 1;
 }
 
-.hero .overlay {
-    background-color: rgba(0, 0, 0, 0.6);
-    text-align: center;
-    padding: 40px;
-    border-radius: 15px;
+#titulo {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2; 
 }
+
+.overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+}
+
 .exteriorimagenes {
     background-color: rgba(113, 8, 233, 0.2);
     padding: 30px;
@@ -608,3 +627,139 @@ tbody tr:not(:last-child) td{border-bottom:1px solid var(--bx-border)}
 }
 .page > main { flex: 1; }
 
+
+/* ===== Temas por momento del día (colores globales) ===== */
+:root {
+  --bg: #0e0f12;
+  --text: #e8eaed;
+  --card: #151a1f;
+  --accent: #ffd92c;
+  --accent-glow: rgba(255, 217, 44, 0.18);
+  --panel: #101318;
+  --panel-border: rgba(255,255,255,.06);
+  --overlay-filter: none;
+  --overlay-gradient: linear-gradient(180deg, rgba(0,0,0,0) 0%, rgba(0,0,0,.25) 100%);
+   --card-bg-a:#141a21;          /* gradiente izquierda */
+  --card-bg-b:#171e26;          /* gradiente derecha  */
+  --card-border:rgba(255,255,255,.08);
+  --card-glow:rgba(255,217,44,.14);
+    --ui-glow-color: rgba(255,217,44,.35);   /* color de luz “global” */
+  --ui-glow-strength: 1;                   /* 0–2 (1 = normal) */
+}
+
+[data-theme="morning"]{
+  /* 08:00–11:59  — luz cálida y viva */
+  --bg:#0f1116;
+  --accent-glow: rgba(255,217,44,0.28);
+  --overlay-gradient: linear-gradient(180deg, rgba(255,235,180,.18) 0%, rgba(0,0,0,.15) 100%);
+  --card-bg-a:#17222a;
+  --card-bg-b:#1b2630;
+  --card-border:rgba(255,255,255,.14);
+  --card-glow:rgba(255,235,130,.35);
+}
+[data-theme="afternoon"]{
+  /* 12:00–17:59 — luz neutra brillante */
+  --bg:#101317;
+  --accent-glow: rgba(255,217,44,0.20);
+  --overlay-gradient: linear-gradient(180deg, rgba(255,255,255,.12) 0%, rgba(0,0,0,.18) 100%);
+  --card-bg-a:#151c23;
+  --card-bg-b:#19222a;
+  --card-border:rgba(255,255,255,.10);
+  --card-glow:rgba(255,220,100,.22);
+}
+[data-theme="night"]{
+  /* 18:00–07:59 — ambiente oscuro */
+  --bg:#050608;
+  --accent-glow: rgba(255,217,44,0.45);
+  --overlay-gradient: linear-gradient(180deg, rgba(0,0,0,.55) 0%, rgba(0,0,0,.75) 100%);
+  --card-bg-a:#0d1217;
+  --card-bg-b:#10161c;
+  --card-border:rgba(255,255,255,.05);
+  --card-glow:rgba(255,200,60,.09);
+}
+
+/* Solo en el index */
+[data-page="home"] .quick-strips .q-item{
+  background: linear-gradient(135deg, var(--card-bg-a), var(--card-bg-b));
+  border: 1px solid var(--card-border);
+  border-radius: 14px;
+  padding: 14px 16px;
+  color: var(--text);
+  /* La sombra usa tanto el glow por tema como la luz global (del 3D) */
+  box-shadow:
+      0 0 calc(14px * var(--ui-glow-strength)) var(--ui-glow-color),
+      0 10px 24px var(--card-glow),
+      0 6px 14px rgba(0,0,0,.40);
+  transition: transform .28s, box-shadow .28s, background .28s;
+  backdrop-filter: blur(8px);
+}
+
+[data-page="home"] .quick-strips .q-item:hover{
+  transform: translateY(-6px);
+  box-shadow:
+      0 0 calc(22px * var(--ui-glow-strength)) var(--ui-glow-color),
+      0 18px 36px var(--card-glow),
+      0 12px 20px rgba(0,0,0,.5);
+}
+
+[data-page="home"] .hero .overlay {
+  background: var(--overlay-gradient);
+}
+
+[data-page="home"] .quick-strips .q-item {
+  backdrop-filter: blur(8px);
+}
+
+/* La capa .overlay del hero aplicará la gradiente del tema */
+.hero .overlay{
+  position:absolute; inset:0;
+  pointer-events:none;
+  background: var(--overlay-gradient);
+  transition: background .6s ease, filter .6s ease;
+}
+  .wrap{ width:min(1080px,94vw); padding:24px 0; }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(280px,1fr));
+    gap:18px;
+  }
+
+  /* Tarjeta base */
+  .card{
+    position:relative; overflow:hidden; cursor:pointer;
+    display:flex; align-items:center;
+    gap:16px; padding:16px 18px;
+    background:var(--card); border:1px solid var(--border);
+    border-radius:16px; box-shadow:0 12px 28px var(--glow);
+    min-height:110px;
+    text-decoration:none; color:inherit;
+  }
+  .card:hover{ box-shadow:0 18px 40px var(--glow) }
+
+  .info strong{display:block; font-size:18px; font-weight:700}
+  .info small{display:block; font-size:12px; opacity:.72}
+
+  /* Canvas a la derecha, con fade-in en hover */
+  .mini3d{
+    position:absolute; right:8px; top:8px; bottom:8px;
+    width:45%; height:calc(100% - 16px);
+    opacity:0; transition:opacity .35s ease; pointer-events:none; z-index:2;
+  }
+  .card:hover .mini3d{ opacity:1 }
+
+  /* Gradiente para que el texto siempre se lea */
+  .card::before{
+    content:""; position:absolute; inset:0; z-index:1; pointer-events:none;
+    background:linear-gradient(90deg, rgba(0,0,0,.35) 0%, rgba(0,0,0,.15) 40%, rgba(0,0,0,0) 65%);
+    transition:opacity .35s ease;
+  }
+  .card:hover::before{ opacity:.9 }
+
+  /* Halo inferior sutil */
+  .card::after{
+    content:""; position:absolute; left:0; right:0; bottom:-14px; height:30px;
+    background:radial-gradient(50% 100% at 50% 0%, rgba(255,217,44,.14), transparent 70%);
+    filter:blur(6px); pointer-events:none;
+  }
+  /* valores por defecto */
