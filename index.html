@@ -5,33 +5,492 @@
     <title>Terminal de Buses Llallagua</title>
     <link rel="stylesheet" href="style.css">
 </head>
-<body>
-    <div class="hero">
-        <div class="overlay">
-            <h1>Terminal de Buses de Llallagua</h1>
-        </div>
-    </div>
-<main>
-  <section class="section">
-    <div class="quick-strips">
-      <a class="q-item" href="historia.html"><span class="q-ico">📜</span><strong>Historia</strong><small>Pergamino interactivo</small></a>
-      <a class="q-item" href="empresas.html"><span class="q-ico">🚌</span><strong>Empresas</strong><small>Rutas y contactos</small></a>
-      <a class="q-item" href="galeria.html"><span class="q-ico">🖼️</span><strong>Galería</strong><small>Fotos del lugar</small></a>
-      <a class="q-item" href="ubicacion.html"><span class="q-ico">📍</span><strong>Ubicación</strong><small>Cómo llegar</small></a>
-    </div>
-  </section>
+<body data-page="home">
+<div class="hero">
+    <canvas id="titulo"></canvas>
+    <div class="overlay"></div>
+</div>
 
-    <main>
-        <section class="intro">
-            <h2>Bienvenidos</h2>
-            <p>
-                Bienvenidos a la terminal de buses de Llallagua. Aquí encontrará los servicios, rutas y horarios, 
-                empresas de transporte, una galería de imágenes del sitio y la ubicación con números de contacto.
-            </p>
-        </section>
-        
-    <footer>
-        <p>&copy; 2025 Terminal de Buses de Llallagua. Todos los derechos reservados.</p>
-    </footer>
+<main>
+  <div class="wrap">
+    <div class="grid">
+      <a class="card" data-type="historia"  href="historia.html">
+        <div class="info"><strong>Historia</strong><small>Pergamino interactivo</small></div>
+        <canvas class="mini3d"></canvas>
+      </a>
+      <a class="card" data-type="empresas" href="empresas.html">
+        <div class="info"><strong>Empresas</strong><small>Rutas y horarios</small></div>
+        <canvas class="mini3d" id="empresas3d"></canvas>
+      </a>
+      <a class="card" data-type="galeria"   href="galeria.html">
+        <div class="info"><strong>Galería</strong><small>Fotos del lugar</small></div>
+        <canvas class="mini3d"></canvas>
+      </a>
+      <a class="card" data-type="ubicacion" href="ubicacion.html">
+        <div class="info"><strong>Ubicación</strong><small>Cómo llegar</small></div>
+        <canvas class="mini3d"></canvas>
+      </a>
+      <a class="card" data-type="modelo"    href="modelo3D.html">
+        <div class="info"><strong>Modelo 3D</strong><small>Vista interactiva</small></div>
+        <canvas class="mini3d"></canvas>
+      </a>
+    </div>
+  </div>
+
+  <section class="intro">
+    <h2>Bienvenidos</h2>
+    <p>
+      Bienvenidos a la terminal de buses de Llallagua. Aquí encontrará los servicios, rutas y horarios,
+      empresas de transporte, una galería de imágenes del sitio y la ubicación con números de contacto.
+    </p>
+  </section>
+</main>
+
+<footer>
+  <p>&copy; 2025 Terminal de Buses de Llallagua. Todos los derechos reservados.</p>
+</footer>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/108/three.min.js"></script>
+<script src="https://threejs.org/examples/js/libs/fontloader.js"></script>
+<script src="https://threejs.org/examples/js/geometries/TextGeometry.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/three@0.108.0/examples/js/loaders/GLTFLoader.js"></script>
+
+<script>
+  window.MICRO3D_CONFIG = {
+    glbEmpresas: "bus.glb"   // ← ajusta esta ruta
+  };
+</script>
+
+<script>
+  // ========= Escena 3D transparente en el hero =========
+  var canvas = document.getElementById("titulo");
+  var scene  = new THREE.Scene();
+
+  var camera = new THREE.PerspectiveCamera(60, 1, 0.1, 100);
+  camera.position.set(0, 0.5, 4.4);
+
+  var renderer = new THREE.WebGLRenderer({ antialias:true, alpha:true, canvas });
+  renderer.setClearColor(0x000000, 0);
+
+  function resize3D(){
+    var r = canvas.getBoundingClientRect();
+    renderer.setSize(r.width, r.height, false);
+    camera.aspect = r.width / r.height;
+    camera.updateProjectionMatrix();
+  }
+  resize3D();
+  addEventListener("resize", resize3D);
+
+  // Luces base (guardamos referencias para el tema)
+  var amb = new THREE.AmbientLight(0xffffff, 0.7);
+  scene.add(amb);
+  var key = new THREE.PointLight(0xffffff, 3);
+  key.position.set(2, 2, 5);
+  scene.add(key);
+
+  // Texto 3D
+  var textMesh, mat, baseX = 0, baseY = -0.3;
+  var loader = new THREE.FontLoader();
+
+  loader.load("https://threejs.org/examples/fonts/helvetiker_bold.typeface.json", function(font){
+    var geo = new THREE.TextGeometry("Terminal De Llallagua", {
+      font, size: 1.0, height: 0.25,
+      bevelEnabled:true, bevelThickness:0.04, bevelSize:0.06, bevelSegments:4
+    });
+    geo.computeBoundingBox();
+    baseX = - (geo.boundingBox.max.x - geo.boundingBox.min.x) / 2;
+
+    mat = new THREE.MeshStandardMaterial({
+      color: 0xffd92c,
+      emissive: 0xffa500,
+      emissiveIntensity: 0.22,
+      metalness: 0.55,
+      roughness: 0.25
+    });
+
+    textMesh = new THREE.Mesh(geo, mat);
+    textMesh.position.set(baseX, baseY, 0);
+    textMesh.scale.setScalar(0.92);
+    scene.add(textMesh);
+
+    // Aplica el tema actual también al material
+    applyTheme(currentTheme());
+  });
+
+  // Movimiento sutil + parallax
+  var mx = 0, my = 0, t0 = performance.now();
+  addEventListener("mousemove", (e)=>{
+    mx = (e.clientX / innerWidth  - 0.5) * 2;
+    my = (e.clientY / innerHeight - 0.5) * 2;
+  });
+
+  function animate(){
+    requestAnimationFrame(animate);
+    var t = performance.now() * 0.001;
+
+    if (textMesh){
+      textMesh.position.x = baseX + mx * 0.25;
+      textMesh.position.y = baseY + Math.sin(t * 1.3) * 0.08 + (-my * 0.10);
+      textMesh.rotation.y += ((mx * 0.45) - textMesh.rotation.y) * 0.08;
+      textMesh.rotation.x += ((-my * 0.25) - textMesh.rotation.x) * 0.08;
+
+      // Pulso tipo neón (intensidad modulada por el tema)
+      if (mat) mat.emissiveIntensity = emissiveBase + Math.sin(t * 2.1) * emissivePulse;
+    }
+    camera.position.x += ((mx * 0.20) - camera.position.x) * 0.04;
+    camera.position.y += ((0.5 - my * 0.20) - camera.position.y) * 0.04;
+
+    renderer.render(scene, camera);
+  }
+  animate();
+
+  // ========= Theming por hora (página + 3D) =========
+  var overlayEl = document.querySelector(".hero .overlay");
+
+  // parámetros del neón según tema
+  var emissiveBase = 0.22, emissivePulse = 0.08;
+
+  function currentTheme(){
+    const h = new Date().getHours();
+    if (h >= 8 && h < 12) return "morning";    // 08:00–11:59
+    if (h >= 12 && h < 18) return "afternoon"; // 12:00–17:59
+    return "night";                             // 18:00–07:59
+  }
+
+  function applyTheme(mode){
+    document.documentElement.setAttribute("data-theme", mode);
+
+    if (mode === "morning"){
+      // página
+      overlayEl && (overlayEl.style.background = getComputedStyle(document.documentElement).getPropertyValue('--overlay-gradient'));
+      // 3D
+      amb.intensity = 0.6;
+      key.color.set(0xfff1a8);
+      key.intensity = 2.5;
+      emissiveBase = 0.20; emissivePulse = 0.10;
+    }
+    else if (mode === "afternoon"){
+      overlayEl && (overlayEl.style.background = getComputedStyle(document.documentElement).getPropertyValue('--overlay-gradient'));
+      amb.intensity = 0.5;
+      key.color.set(0xffffff);
+      key.intensity = 2.0;
+      emissiveBase = 0.18; emissivePulse = 0.07;
+    }
+    else { // night
+      overlayEl && (overlayEl.style.background = getComputedStyle(document.documentElement).getPropertyValue('--overlay-gradient'));
+      amb.intensity = 0.22;
+      key.color.set(0xffc700);
+      key.intensity = 1.4;
+      emissiveBase = 0.32; emissivePulse = 0.12;
+    }
+
+    if (mat){
+      mat.emissiveIntensity = emissiveBase;
+    }
+  }
+
+  // Aplica de inicio y re-chequea cada 5 minutos
+  applyTheme(currentTheme());
+  setInterval(function(){ applyTheme(currentTheme()); }, 5 * 60 * 1000);
+
+  // (Opcional) Tecla T para alternar manualmente y probar
+  document.addEventListener('keydown', (e)=>{
+    if(e.key.toLowerCase()==='t'){
+     const order = ['morning','afternoon','night'];
+     const i = order.indexOf(document.documentElement.getAttribute('data-theme')) || 0;
+    applyTheme(order[(i+1)%3]);
+    }
+  });
+</script>
+ <script>
+  // ========= Config: ruta del GLB solo para EMPRESAS =========
+  const GLB_URLS = {
+    empresas : 'bus.glb' 
+  };
+
+  // ===== Inicializa TODAS las tarjetas =====
+  document.querySelectorAll('.card').forEach(card=>{
+    const type   = card.getAttribute('data-type');
+    const canvas = card.querySelector('.mini3d');
+    if (!canvas) return;
+
+    // Si es EMPRESAS => usa GLB
+    if (type === 'empresas'){
+      initMicroGLB(canvas, card, GLB_URLS.empresas);
+    } else {
+      // Resto: procedurales low-poly
+      initMicroProcedural(canvas, card, type);
+    }
+  });
+
+  // ===== Util común para renderer/cámara =====
+  function makeRendererAndCamera(canvas, fov=35){
+    const cam = new THREE.PerspectiveCamera(fov, 1, 0.01, 100);
+    cam.position.set(2.2, 1.6, 3.0);
+    cam.lookAt(0, 0.25, 0);
+
+    const renderer = new THREE.WebGLRenderer({ canvas, antialias:true, alpha:true });
+    renderer.setClearColor(0x000000, 0);
+    renderer.outputEncoding = THREE.sRGBEncoding;
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.05;
+
+    function fit(){
+      const dpr = Math.min(2, window.devicePixelRatio||1);
+      const r = canvas.getBoundingClientRect();
+      if (canvas.width !== Math.round(r.width*dpr) || canvas.height !== Math.round(r.height*dpr)){
+        renderer.setPixelRatio(dpr);
+        renderer.setSize(r.width, r.height, false);
+        cam.aspect = r.width / r.height;
+        cam.updateProjectionMatrix();
+      }
+    }
+    fit(); new ResizeObserver(fit).observe(canvas); addEventListener('resize', fit);
+    return { renderer, cam };
+  }
+
+  // ===== Luces comunes =====
+  function addCommonLights(scene){
+    scene.add(new THREE.AmbientLight(0xffffff, 0.9));
+    const key = new THREE.DirectionalLight(0xffffff, 0.95);
+    key.position.set(2.2, 2.4, 2.8); scene.add(key);
+    const rim = new THREE.DirectionalLight(0xffe07a, 0.7);
+    rim.position.set(-2.4, 1.1, -1.6); scene.add(rim);
+  }
+  function addFakeShadow(scene, radius=1.0){
+    const shadow = new THREE.Mesh(
+      new THREE.CircleGeometry(radius, 32),
+      new THREE.MeshBasicMaterial({ color:0x000000, opacity:0.25, transparent:true })
+    );
+    shadow.rotation.x = -Math.PI/2;
+    shadow.position.y = -0.01;
+    scene.add(shadow);
+    return shadow;
+  }
+
+  // ===== Procedurales (todas excepto Empresas) =====
+  function initMicroProcedural(canvas, parentCard, type){
+    const scene = new THREE.Scene();
+    const { renderer, cam } = makeRendererAndCamera(canvas);
+    addCommonLights(scene);
+    const shadow = addFakeShadow(scene, 0.95);
+
+    let group = new THREE.Group(); scene.add(group);
+
+    // Modelos por tipo
+    if(type === 'ubicacion'){
+      const ground = new THREE.Mesh(
+        new THREE.CircleGeometry(0.9, 6),
+        new THREE.MeshStandardMaterial({ color:0x2b8d4b, metalness:.15, roughness:.65 })
+      );
+      ground.rotation.x = -Math.PI/2; ground.position.y = -0.02; scene.add(ground);
+
+      const pinStem = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.08, 0.12, 0.45, 14),
+        new THREE.MeshStandardMaterial({ color:0xff3a3a, metalness:.25, roughness:.45 })
+      );
+      pinStem.position.y = 0.32;
+      const pinHead = new THREE.Mesh(
+        new THREE.SphereGeometry(0.16, 20, 16),
+        new THREE.MeshStandardMaterial({ color:0xff4444, metalness:.2 })
+      );
+      pinHead.position.y = 0.58;
+      group.add(pinStem, pinHead);
+      group.position.set(0.25, 0.08, 0.05);
+      group.rotation.y = Math.PI*0.1;
+    }
+
+    if(type === 'galeria'){
+      const body = new THREE.Mesh(
+        new THREE.BoxGeometry(1.1,0.6,0.5),
+        new THREE.MeshStandardMaterial({ color:0x222831, metalness:.4, roughness:.5 })
+      );
+      const grip = new THREE.Mesh(
+        new THREE.BoxGeometry(0.25,0.55,0.5),
+        new THREE.MeshStandardMaterial({ color:0x1a1f26, metalness:.3, roughness:.5 })
+      );
+      grip.position.x = -0.68;
+      const lens = new THREE.Mesh(
+        new THREE.CylinderGeometry(0.22,0.22,0.6,22),
+        new THREE.MeshStandardMaterial({ color:0x0b0d10, metalness:.5, roughness:.3 })
+      );
+      lens.rotation.z = Math.PI/2; lens.position.x = 0.65;
+      const ring = new THREE.Mesh(
+        new THREE.TorusGeometry(0.23,0.03,12,24),
+        new THREE.MeshStandardMaterial({ color:0x3aa6ff, emissive:0x1f6ddc, emissiveIntensity:0.35, metalness:.5, roughness:.2 })
+      );
+      ring.rotation.y = Math.PI/2; ring.position.x = 0.65;
+      group.add(body,grip,lens,ring);
+      group.rotation.y = -Math.PI*0.15;
+    }
+
+if(type === 'modelo'){
+  const parts = [];
+  const mat = new THREE.MeshStandardMaterial({
+    color:0x3ffff0, emissive:0x00c8ff, emissiveIntensity:0.35,
+    metalness:.2, roughness:.15, transparent:true, opacity:0.85
+  });
+  for(let i=0;i<3;i++){
+    const box = new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.6), mat.clone());
+    box.position.x = (i-1)*0.9; 
+    parts.push(box); group.add(box);
+  }
+  group.userData.parts = parts;
+  group.rotation.y = Math.PI*0.15;
+
+  group.userData.baseY = 0.22;   
+  group.position.y = group.userData.baseY;
+}
+
+    if(type === 'historia'){
+  const matPerg = new THREE.MeshStandardMaterial({
+    color: 0xf5deb3, // tono pergamino
+    emissive: 0x2c1a00,
+    emissiveIntensity: 0.12,
+    roughness: 0.45,
+    metalness: 0.1
+  });
+
+  const rodMat = new THREE.MeshStandardMaterial({
+    color: 0xd8c6a0,
+    emissive: 0x3b2a08,
+    emissiveIntensity: 0.08,
+    roughness: 0.35,
+    metalness: 0.05
+  });
+
+  // cilindro del pergamino
+  const scroll = new THREE.Mesh(
+    new THREE.CylinderGeometry(0.12, 0.12, 1.2, 32),
+    matPerg
+  );
+  scroll.rotation.z = Math.PI / 2;
+
+  // barras laterales (madera)
+  const rod1 = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 1.5, 16), rodMat);
+  const rod2 = rod1.clone();
+  rod1.rotation.z = rod2.rotation.z = Math.PI / 2;
+  rod1.position.z = 0.12;
+  rod2.position.z = -0.12;
+
+  group.add(scroll, rod1, rod2);
+
+  group.position.y = 0.07;
+  group.rotation.x = 0.28;
+  group.rotation.y = -0.45;
+  group.userData.baseRot = group.rotation.y;
+
+  group.userData.float = true; // activar flotación leve
+}
+
+
+    // Hover + animación
+    let hovering=false;
+    parentCard.addEventListener('mouseenter', ()=> hovering = true);
+    parentCard.addEventListener('mouseleave', ()=> hovering = false);
+
+    function animate(){
+      requestAnimationFrame(animate);
+      const t = performance.now()*0.002;
+      if (hovering){
+        if(type === 'ubicacion'){
+          group.position.y = Math.sin(t*1.8)*0.06 + 0.08;
+          group.rotation.y += 0.01;
+          shadow.scale.setScalar(0.92 + Math.sin(t*1.8)*0.05);
+        }
+        if(type === 'galeria'){
+          group.rotation.y += 0.01;
+        }
+        if(type === 'modelo'){
+          const parts = group.userData.parts || [];
+          parts.forEach((p)=>{ p.position.x += (0 - p.position.x)*0.08; });
+          group.rotation.y += 0.01;
+        }
+if(type === 'historia'){
+  group.rotation.y += 0.012; // girito elegante
+  group.position.y = 0.07 + Math.sin(t)*0.025;
+}
+
+      } else {
+        if(type === 'modelo'){
+          const parts = group.userData.parts || [];
+          parts.forEach((p, i)=>{ const target=(i-1)*0.9; p.position.x += (target - p.position.x)*0.08; }); 
+        }
+if(type === 'historia'){
+  const base = group.userData.baseRot || -0.45;
+  group.rotation.y += (base - group.rotation.y)*0.08;
+  group.position.y += (0.07 - group.position.y)*0.08;
+}
+
+      }
+      renderer.render(scene, cam);
+    }
+    animate();
+  }
+
+  // ===== GLB (solo Empresas) =====
+  function initMicroGLB(canvas, parentCard, glbUrl){
+    const scene = new THREE.Scene();
+    const { renderer, cam } = makeRendererAndCamera(canvas);
+    addCommonLights(scene);
+    const shadow = addFakeShadow(scene, 1.0);
+
+    let hovering=false, loaded=false, model=null;
+
+    function loadGLB(){
+      if(loaded) return; loaded = true;
+      const loader = new THREE.GLTFLoader();
+      loader.load(
+        glbUrl,
+        (gltf)=>{
+          model = gltf.scene;
+
+          // Normaliza: centrar y auto-escalar
+          const box = new THREE.Box3().setFromObject(model);
+          const size = box.getSize(new THREE.Vector3());
+          const center = box.getCenter(new THREE.Vector3());
+          model.position.sub(center);
+
+          const radius = Math.max(size.x, size.y, size.z) * 0.5;
+          const target = 1.2; // radio visual deseado
+          const scale  = target / radius;
+          model.scale.setScalar(scale);
+
+          // Ajuste de materiales suaves
+          model.traverse(o=>{
+            if (o.isMesh && o.material){
+              if (o.material.metalness !== undefined) o.material.metalness = Math.min(0.6, o.material.metalness);
+              if (o.material.roughness !== undefined) o.material.roughness = Math.max(0.2, o.material.roughness);
+            }
+          });
+
+          // Pose inicial
+          model.rotation.y = Math.PI*0.20;
+          model.position.y = 0.1;
+
+          scene.add(model);
+        },
+        undefined,
+        (err)=>console.error('Error cargando GLB:', err)
+      );
+    }
+
+    // Hover
+    parentCard.addEventListener('mouseenter', ()=>{ hovering=true; loadGLB(); });
+    parentCard.addEventListener('mouseleave', ()=> hovering=false);
+
+    function animate(){
+      requestAnimationFrame(animate);
+      if(hovering && model){
+        const t = performance.now()*0.002;
+        model.rotation.y += 0.012;
+        model.position.y = 0.1 + Math.sin(t)*0.02;
+        shadow.scale.setScalar(0.95 + Math.sin(t)*0.02);
+      }
+      renderer.render(scene, cam);
+    }
+    animate();
+  }
+  </script>
 </body>
 </html>
